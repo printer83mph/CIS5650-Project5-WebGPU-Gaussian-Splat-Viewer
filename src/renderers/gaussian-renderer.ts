@@ -180,10 +180,50 @@ export default function get_renderer(
     bindGroupLayouts: [splatsBindGroupLayout],
   });
 
+  const renderShaderModule = device.createShaderModule({
+    label: 'gaussian render module',
+    code: renderWGSL,
+  });
+
   const renderPipeline = device.createRenderPipeline({
     label: 'gaussian render pipeline',
     layout: renderPipelineLayout,
-    // TODO: complete this object
+    vertex: {
+      module: renderShaderModule,
+      entryPoint: 'vs_main',
+    },
+    fragment: {
+      module: renderShaderModule,
+      entryPoint: 'fs_main',
+      targets: [
+        {
+          format: presentation_format,
+          blend: {
+            color: {
+              srcFactor: 'src-alpha',
+              dstFactor: 'one-minus-src-alpha',
+              operation: 'add',
+            },
+            alpha: {
+              srcFactor: 'one',
+              dstFactor: 'one-minus-src-alpha',
+              operation: 'add',
+            },
+          },
+        },
+      ],
+    },
+    primitive: {
+      topology: 'triangle-list',
+      cullMode: 'none',
+      frontFace: 'ccw',
+    },
+  });
+
+  const splatsBindGroup = device.createBindGroup({
+    label: 'splats bind group',
+    layout: splatsBindGroupLayout,
+    entries: [{ binding: 0, resource: { buffer: splatsBuffer } }],
   });
 
   // ===============================================
@@ -219,7 +259,11 @@ export default function get_renderer(
       // no need for depth buffer, we sort everything anyway
     });
     renderPass.setPipeline(renderPipeline);
-    renderPass.setBindGroup();
+    renderPass.setBindGroup(0, splatsBindGroup);
+
+    renderPass.drawIndirect(indirectDrawBuffer, 0);
+
+    renderPass.end();
   };
 
   // ===============================================
