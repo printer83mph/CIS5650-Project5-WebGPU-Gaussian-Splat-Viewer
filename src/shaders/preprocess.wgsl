@@ -28,8 +28,8 @@ struct DispatchIndirect {
 
 struct SortInfos {
     keys_size: atomic<u32>,  // instance_count in DrawIndirect
-    //data below is for info inside radix sort 
-    padded_size: u32, 
+    //data below is for info inside radix sort
+    padded_size: u32,
     passes: u32,
     even_pass: u32,
     odd_pass: u32,
@@ -56,7 +56,7 @@ struct Gaussian {
 };
 
 struct Splat {
-    //TODO: store information for 2D splat rendering
+    position: u32
 };
 
 //TODO: bind your data here
@@ -69,7 +69,7 @@ var<storage, read_write> sort_indices : array<u32>;
 @group(2) @binding(3)
 var<storage, read_write> sort_dispatch: DispatchIndirect;
 
-/// reads the ith sh coef from the storage buffer 
+/// reads the ith sh coef from the storage buffer
 fn sh_coef(splat_idx: u32, c_idx: u32) -> vec3<f32> {
     //TODO: access your binded sh_coeff, see load.ts for how it is stored
     return vec3<f32>(0.0);
@@ -113,6 +113,6 @@ fn preprocess(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(num_workgr
     let idx = gid.x;
     //TODO: set up pipeline as described in instruction
 
-    let keys_per_dispatch = workgroupSize * sortKeyPerThread; 
+    let keys_per_dispatch = workgroupSize * sortKeyPerThread;
     // increment DispatchIndirect.dispatchx each time you reach limit for one dispatch of keys
 }
