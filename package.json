@@ -9,8 +9,10 @@
   },
   "devDependencies": {
     "@tweakpane/core": "^1.1.7",
-    "tweakpane-plugin-file-import": "^0.2.0",
+    "@types/node": "^24.9.1",
     "@webgpu/types": "^0.1.31",
+    "prettier": "^3.6.2",
+    "tweakpane-plugin-file-import": "^0.2.0",
     "typescript": "^5.0.4",
     "vite": "^4.3.1",
     "vite-raw-plugin": "^1.0.1"
