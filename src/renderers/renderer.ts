@@ -150,11 +150,12 @@ export default async function init(
       case '6':
       case '7':
       case '8':
-      case '9':
+      case '9': {
         const i = parseInt(event.key);
         console.log(`set to camera preset ${i}`);
         camera.set_preset(cameras[i]);
         break;
+      }
     }
   });
 

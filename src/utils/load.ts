@@ -28,7 +28,7 @@ export async function load(file: string, device: GPUDevice) {
     arrayBuffer as ArrayBuffer,
   );
   // figure out the SH degree from the number of coefficients
-  var nRestCoeffs = 0;
+  let nRestCoeffs = 0;
   for (const propertyName in propertyTypes) {
     if (propertyName.startsWith('f_rest_')) {
       nRestCoeffs += 1;
@@ -75,7 +75,7 @@ export async function load(file: string, device: GPUDevice) {
   });
   const sh = new Float16Array(sh_buffer.getMappedRange());
 
-  var readOffset = 0;
+  let readOffset = 0;
   for (let i = 0; i < num_points; i++) {
     const [newReadOffset, rawVertex] = readRawVertex(
       readOffset,
