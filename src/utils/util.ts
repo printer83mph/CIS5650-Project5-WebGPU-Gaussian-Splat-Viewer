@@ -1,10 +1,7 @@
 /**
  * Asserts `condition` is true. Otherwise, throws an `Error` with the provided message.
  */
-export function assert(
-  condition: boolean,
-  msg?: string | (() => string),
-): asserts condition {
+export function assert(condition: boolean, msg?: string | (() => string)): asserts condition {
   if (!condition) {
     throw new Error(msg && (typeof msg === 'string' ? msg : msg()));
   }
@@ -28,9 +25,6 @@ export function unreachable(msg?: string): never {
 /** Round `n` up to the next multiple of `alignment` (inclusive). */
 export function align(n: number, alignment: number): number {
   assert(Number.isInteger(n) && n >= 0, 'n must be a non-negative integer');
-  assert(
-    Number.isInteger(alignment) && alignment > 0,
-    'alignment must be a positive integer',
-  );
+  assert(Number.isInteger(alignment) && alignment > 0, 'alignment must be a positive integer');
   return Math.ceil(n / alignment) * alignment;
 }

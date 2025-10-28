@@ -23,29 +23,19 @@ export interface SortStuff {
   }[];
 }
 
-function create_ping_pong_buffer(
-  adjusted_count: number,
-  keysize: number,
-  device: GPUDevice,
-) {
+function create_ping_pong_buffer(adjusted_count: number, keysize: number, device: GPUDevice) {
   return {
     // payload
     sort_indices_buffer: device.createBuffer({
       label: 'ping pong sort indices',
       size: keysize * 4,
-      usage:
-        GPUBufferUsage.STORAGE |
-        GPUBufferUsage.COPY_DST |
-        GPUBufferUsage.COPY_SRC,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     }),
     // key
     sort_depths_buffer: device.createBuffer({
       label: 'ping pong sort depths',
       size: adjusted_count * 4,
-      usage:
-        GPUBufferUsage.STORAGE |
-        GPUBufferUsage.COPY_DST |
-        GPUBufferUsage.COPY_SRC,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     }),
   };
 }
@@ -68,8 +58,7 @@ export const C = {
 
   rs_mem_dwords: 0,
 };
-const c_rs_smem_phase_2 =
-  C.rs_radix_size + C.rs_scatter_block_rows * C.scatter_wg_size;
+const c_rs_smem_phase_2 = C.rs_radix_size + C.rs_scatter_block_rows * C.scatter_wg_size;
 C.rs_mem_dwords = c_rs_smem_phase_2;
 
 function create_pipelines(device: GPUDevice) {
@@ -212,15 +201,11 @@ function get_scatter_histogram_sizes(keysize: number) {
   // as a general rule of thumb, scater_blocks_ru is equal to histo_blocks_ru, except the amount of elements in these two stages is different
 
   const scatter_block_kvs = C.histogram_wg_size * C.rs_scatter_block_rows;
-  const scatter_blocks_ru = Math.floor(
-    (keysize + scatter_block_kvs - 1) / scatter_block_kvs,
-  );
+  const scatter_blocks_ru = Math.floor((keysize + scatter_block_kvs - 1) / scatter_block_kvs);
   const count_ru_scatter = scatter_blocks_ru * scatter_block_kvs;
 
   const histo_block_kvs = C.histogram_wg_size * C.rs_histogram_block_rows;
-  const histo_blocks_ru = Math.floor(
-    (count_ru_scatter + histo_block_kvs - 1) / histo_block_kvs,
-  );
+  const histo_blocks_ru = Math.floor((count_ru_scatter + histo_block_kvs - 1) / histo_block_kvs);
   const count_ru_histo = histo_blocks_ru * histo_block_kvs;
 
   return {
@@ -259,17 +244,11 @@ function create_histogram_buffer(keysize: number, device: GPUDevice) {
   const histo_size = C.rs_radix_size * Uint32Array.BYTES_PER_ELEMENT;
 
   // const internal_size = (C.keyval_size + scatter_blocks_ru - 1 + 1) * histo_size; // +1 safety
-  const internal_size = align(
-    (C.rs_keyval_size + scatter_blocks_ru - 1 + 1) * histo_size,
-    4,
-  ); // +1 safety
+  const internal_size = align((C.rs_keyval_size + scatter_blocks_ru - 1 + 1) * histo_size, 4); // +1 safety
   return device.createBuffer({
     label: 'histogram',
     size: internal_size,
-    usage:
-      GPUBufferUsage.STORAGE |
-      GPUBufferUsage.COPY_DST |
-      GPUBufferUsage.COPY_SRC,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
   });
 }
 
@@ -278,8 +257,7 @@ const num_pass = 4;
 export function get_sorter(keysize: number, device: GPUDevice): SortStuff {
   const keys_per_workgroup = C.histogram_wg_size * C.rs_histogram_block_rows;
   const keys_count_adjusted =
-    (Math.floor((keysize + keys_per_workgroup - 1) / keys_per_workgroup) + 1) *
-    keys_per_workgroup;
+    (Math.floor((keysize + keys_per_workgroup - 1) / keys_per_workgroup) + 1) * keys_per_workgroup;
 
   console.log(`keys count adjusted: ${keys_count_adjusted}`); // histogram count
   console.log(`key size: ${keysize}`);
@@ -287,19 +265,13 @@ export function get_sorter(keysize: number, device: GPUDevice): SortStuff {
   const sort_info_buffer = device.createBuffer({
     label: 'sort info',
     size: 5 * 4,
-    usage:
-      GPUBufferUsage.STORAGE |
-      GPUBufferUsage.COPY_DST |
-      GPUBufferUsage.COPY_SRC,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
   });
 
   const sort_dispatch_indirect_buffer = device.createBuffer({
     label: 'sort dispatch indirect',
     size: 3 * 4,
-    usage:
-      GPUBufferUsage.STORAGE |
-      GPUBufferUsage.COPY_DST |
-      GPUBufferUsage.INDIRECT,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.INDIRECT,
   });
 
   const pipelines = create_pipelines(device);
@@ -311,8 +283,7 @@ export function get_sorter(keysize: number, device: GPUDevice): SortStuff {
 
   const histogram_buffer = create_histogram_buffer(keysize, device);
 
-  const { scatter_blocks_ru, count_ru_histo } =
-    get_scatter_histogram_sizes(keysize);
+  const { scatter_blocks_ru, count_ru_histo } = get_scatter_histogram_sizes(keysize);
   device.queue.writeBuffer(
     sort_info_buffer,
     0,

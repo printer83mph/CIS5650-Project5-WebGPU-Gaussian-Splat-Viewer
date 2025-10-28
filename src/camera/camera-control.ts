@@ -9,14 +9,8 @@ export class CameraControl {
 
   register_element(value: HTMLCanvasElement) {
     if (this.element && this.element != value) {
-      this.element.removeEventListener(
-        'pointerdown',
-        this.downCallback.bind(this),
-      );
-      this.element.removeEventListener(
-        'pointermove',
-        this.moveCallback.bind(this),
-      );
+      this.element.removeEventListener('pointerdown', this.downCallback.bind(this));
+      this.element.removeEventListener('pointermove', this.moveCallback.bind(this));
       this.element.removeEventListener('pointerup', this.upCallback.bind(this));
       this.element.removeEventListener('wheel', this.wheelCallback.bind(this));
     }
@@ -83,9 +77,7 @@ export class CameraControl {
     // const r = mat4.identity();
     // mat4.rotateY(r, -xDelta, r);
     // mat4.rotateX(r, yDelta, r);
-    const r = mat4.fromQuat(
-      quat.fromEuler(yDelta * 0.01, -xDelta * 0.01, 0, 'xyz'),
-    );
+    const r = mat4.fromQuat(quat.fromEuler(yDelta * 0.01, -xDelta * 0.01, 0, 'xyz'));
 
     mat4.mul(r, this.camera.rotation, this.camera.rotation);
 

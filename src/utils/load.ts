@@ -24,9 +24,7 @@ export async function load(file: string, device: GPUDevice) {
     reader.readAsArrayBuffer(blob);
   });
 
-  const [vertexCount, propertyTypes, vertexData] = decodeHeader(
-    arrayBuffer as ArrayBuffer,
-  );
+  const [vertexCount, propertyTypes, vertexData] = decodeHeader(arrayBuffer as ArrayBuffer);
   // figure out the SH degree from the number of coefficients
   let nRestCoeffs = 0;
   for (const propertyName in propertyTypes) {
@@ -77,11 +75,7 @@ export async function load(file: string, device: GPUDevice) {
 
   let readOffset = 0;
   for (let i = 0; i < num_points; i++) {
-    const [newReadOffset, rawVertex] = readRawVertex(
-      readOffset,
-      vertexData,
-      propertyTypes,
-    );
+    const [newReadOffset, rawVertex] = readRawVertex(readOffset, vertexData, propertyTypes);
     readOffset = newReadOffset;
 
     const o = i * (c_size_3d_gaussian / c_size_float);

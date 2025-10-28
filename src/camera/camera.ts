@@ -25,12 +25,7 @@ function get_view_matrix(r: Mat4, t: Vec3): Mat4 {
   return mat4.translate(r, minus_t);
 }
 
-function get_projection_matrix(
-  znear: number,
-  zfar: number,
-  fov_x: number,
-  fov_y: number,
-) {
+function get_projection_matrix(znear: number, zfar: number, fov_x: number, fov_y: number) {
   // return mat4.perspective(fov_y, 1, znear, zfar);
 
   const tan_half_fov_y = Math.tan(fov_y / 2);
@@ -68,9 +63,7 @@ interface CameraPreset {
   rotation: Mat4;
 }
 
-export async function load_camera_presets(
-  file: string,
-): Promise<CameraPreset[]> {
+export async function load_camera_presets(file: string): Promise<CameraPreset[]> {
   const blob = new Blob([file]);
   const arrayBuffer = await new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -167,11 +160,7 @@ export class Camera {
     this.proj_matrix = get_projection_matrix(0.01, 100, this.fovX, this.fovY);
 
     const inv_view_matrix = mat4.inverse(this.view_matrix);
-    vec3.transformMat4Upper3x3(
-      vec3.create(0, 0, 1),
-      inv_view_matrix,
-      this.look,
-    );
+    vec3.transformMat4Upper3x3(vec3.create(0, 0, 1), inv_view_matrix, this.look);
     vec3.normalize(this.look, this.look);
 
     vec3.cross(this.up, this.look, this.right);
@@ -190,11 +179,7 @@ export class Camera {
     intermediate_float_32_array.set(this.focal, offset);
     offset += 2;
 
-    this.device.queue.writeBuffer(
-      this.uniform_buffer,
-      0,
-      intermediate_float_32_array,
-    );
+    this.device.queue.writeBuffer(this.uniform_buffer, 0, intermediate_float_32_array);
   }
   set_preset(preset: CameraPreset): void {
     vec3.copy(preset.position, this.position);

@@ -1,10 +1,7 @@
 import { load } from '../utils/load';
 import { Pane } from 'tweakpane';
 import * as TweakpaneFileImportPlugin from 'tweakpane-plugin-file-import';
-import {
-  default as get_renderer_gaussian,
-  GaussianRenderer,
-} from './gaussian-renderer';
+import { default as get_renderer_gaussian, GaussianRenderer } from './gaussian-renderer';
 import { default as get_renderer_pointcloud } from './point-cloud-renderer';
 import { Camera, load_camera_presets } from '../camera/camera';
 import { CameraControl } from '../camera/camera-control';
@@ -132,11 +129,9 @@ export default async function init(
       });
   }
   {
-    pane
-      .addInput(params, 'gaussian_multiplier', { min: 0, max: 1.5 })
-      .on('change', (e) => {
-        //TODO: Bind constants to the gaussian renderer.
-      });
+    pane.addInput(params, 'gaussian_multiplier', { min: 0, max: 1.5 }).on('change', (e) => {
+      //TODO: Bind constants to the gaussian renderer.
+    });
   }
 
   document.addEventListener('keydown', (event) => {

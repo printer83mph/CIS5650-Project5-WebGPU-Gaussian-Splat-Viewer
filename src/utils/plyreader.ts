@@ -45,8 +45,7 @@ export function decodeHeader(
     }
   }
 
-  const vertexByteOffset =
-    headerText.indexOf('end_header') + 'end_header'.length + 1;
+  const vertexByteOffset = headerText.indexOf('end_header') + 'end_header'.length + 1;
   const vertexData = new DataView(plyArrayBuffer, vertexByteOffset);
 
   return [vertexCount, propertyTypes, vertexData];
