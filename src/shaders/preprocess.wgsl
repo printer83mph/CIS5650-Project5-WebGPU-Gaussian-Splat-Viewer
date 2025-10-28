@@ -56,8 +56,9 @@ struct Gaussian {
 };
 
 struct Splat {
-    position: u32
-    // TODO: probably more info
+    position: u32, // 2x f16
+    color: array<u32, 2>, // 3x f16 rgb, 1x f16 opacity
+    conic: array<u32, 2>, // 3x f16 cov, 1x f16 radius
 };
 
 @group(0) @binding(0) var<uniform> camera: CameraUniforms;
@@ -128,14 +129,33 @@ fn preprocess(
     let pos_z_opacity = unpack2x16float(gaussian.pos_opacity[1]);
     let pos = vec4f(pos_xy, pos_z_opacity.x, 1.);
 
-    var pos_ndc = camera.proj * camera.view * pos;
+    var pos_view = camera.view * pos;
+    var pos_ndc = camera.proj * pos_view;
     pos_ndc /= pos_ndc.w;
-    // TODO: some kind of view frustum culling
 
+    // if any(abs(pos_ndc.xy) > vec2f(1.2)) {
+    //     return;
+    // }
+    // TODO: also check if behind camera
+
+    // we got here = this splat is going to be drawn!
     let splat_idx = atomicAdd(&sort_infos.keys_size, 1u);
     splats[splat_idx].position = pack2x16float(pos_ndc.xy);
+    // TODO: splats[splat_idx].color =
+    // TODO: splats[splat_idx].conic =
 
-    // TODO: update sort_indices and sort_depths
+    // update sort info
+    sort_indices[splat_idx] = splat_idx;
+    let depth = -pos_view.z;
+    let depth_bits = bitcast<u32>(depth);
+
+    // Flip all bits if negative (sign bit set), otherwise flip just the sign bit
+    let sortable_depth = select(
+        depth_bits ^ 0x80000000u,  // Positive: flip sign bit
+        ~depth_bits,               // Negative: flip all bits
+        (depth_bits & 0x80000000u) != 0u
+    );
+    sort_depths[splat_idx] = sortable_depth;
 
     let keys_per_dispatch = workgroupSize * sortKeyPerThread;
     // increment DispatchIndirect.dispatchx each time you reach limit for one dispatch of keys

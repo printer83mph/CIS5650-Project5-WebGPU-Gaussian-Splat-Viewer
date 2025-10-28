@@ -38,10 +38,10 @@ export default function get_renderer(
   };
   updateRenderSettings(device, { gaussianScaling: 1, shDeg: pc.sh_deg });
 
-  const splatByteSize = 4 * 1; // just position for now, 2x f16 in one u32
+  const splatSizeBytes = 4 * 5; // 5x u32
   const splatsBuffer = device.createBuffer({
     label: 'splats',
-    size: pc.num_points * splatByteSize,
+    size: pc.num_points * splatSizeBytes,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
   });
 
@@ -110,11 +110,15 @@ export default function get_renderer(
     label: 'splats bind group layout',
     entries: [
       {
-        binding: 0,
+        binding: 0, // splats
         visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
         buffer: { type: 'read-only-storage' },
       },
-      // TODO: sorting info for indexing porpoises 🦭
+      {
+        binding: 1, // sorted splat indices
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: 'read-only-storage' },
+      },
     ],
   });
 
@@ -226,7 +230,10 @@ export default function get_renderer(
   const splatsBindGroup = device.createBindGroup({
     label: 'splats bind group',
     layout: splatsBindGroupLayout,
-    entries: [{ binding: 0, resource: { buffer: splatsBuffer } }],
+    entries: [
+      { binding: 0, resource: { buffer: splatsBuffer } },
+      { binding: 1, resource: { buffer: sorter.ping_pong[0].sort_indices_buffer } },
+    ],
   });
 
   // ===============================================
@@ -279,7 +286,10 @@ export default function get_renderer(
 
       sorter.reset(encoder);
       sorter.sort(encoder);
-      // TODO: feed sorter output to render pipeline
+
+      // copy number of splats to instance count (2nd f32)
+      encoder.copyBufferToBuffer(sorter.sort_info_buffer, 0, indirectDrawBuffer, 4, 4);
+      // TODO: figure out issues with this, seems like we're not getting enough elements
 
       // run indirect rendering pipeline
       render(encoder, texture_view);
