@@ -57,6 +57,7 @@ struct Gaussian {
 
 struct Splat {
     position: u32
+    // TODO: probably more info
 };
 
 @group(0) @binding(0) var<uniform> camera: CameraUniforms;
@@ -111,7 +112,10 @@ fn computeColorFromSH(dir: vec3<f32>, v_idx: u32, sh_deg: u32) -> vec3<f32> {
 }
 
 @compute @workgroup_size(workgroupSize,1,1)
-fn preprocess(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(num_workgroups) wgs: vec3<u32>) {
+fn preprocess(
+    @builtin(global_invocation_id) gid: vec3<u32>,
+    @builtin(num_workgroups) wgs: vec3<u32>
+) {
     let idx = gid.x;
     //TODO: set up pipeline as described in instruction
 

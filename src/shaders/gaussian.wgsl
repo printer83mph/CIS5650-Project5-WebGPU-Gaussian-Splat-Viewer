@@ -1,15 +1,19 @@
+struct Splat {
+    position: u32
+    // TODO: probably more info, sync with definition from preprocess
+};
+
+@group(0) @binding(0) var<storage, read> splats: array<Splat>;
+
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     //TODO: information passed from vertex shader to fragment shader
 };
 
-//TODO: information defined in preprocess compute shader
-struct Splat {
-    position: u32
-};
-
 @vertex
 fn vs_main(
+    @builtin(vertex_index) vert_idx: u32,
+    @builtin(instance_index) instance_idx: u32,
 ) -> VertexOutput {
     //TODO: reconstruct 2D quad based on information from splat, pass
     var out: VertexOutput;

@@ -38,7 +38,7 @@ export default function get_renderer(
   };
   updateRenderSettings(device, { gaussianScaling: 1, shDeg: pc.sh_deg });
 
-  const splatByteSize = 4 * 1; // just position for now
+  const splatByteSize = 4 * 1; // just position for now, 2x f16 in one u32
   const splatsBuffer = device.createBuffer({
     label: 'splats',
     size: pc.num_points * splatByteSize,
@@ -106,8 +106,24 @@ export default function get_renderer(
     })),
   });
 
+  const splatsBindGroupLayout = device.createBindGroupLayout({
+    label: 'splats bind group layout',
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        buffer: { type: 'read-only-storage' },
+      },
+      // TODO: sorting info for indexing porpoises 🦭
+    ],
+  });
+
+  // ===============================================
+  //    Create Compute Pipeline and Bind Groups
+  // ===============================================
+
   const preprocessPipelineLayout = device.createPipelineLayout({
-    label: 'preprocess layout',
+    label: 'gaussian preprocess layout',
     bindGroupLayouts: [
       cameraUniformsBindGroupLayout,
       gaussianBindGroupLayout,
@@ -115,9 +131,6 @@ export default function get_renderer(
     ],
   });
 
-  // ===============================================
-  //    Create Compute Pipeline and Bind Groups
-  // ===============================================
   const preprocess_pipeline = device.createComputePipeline({
     label: 'preprocess',
     layout: preprocessPipelineLayout,
@@ -162,6 +175,17 @@ export default function get_renderer(
   //    Create Render Pipeline and Bind Groups
   // ===============================================
 
+  const renderPipelineLayout = device.createPipelineLayout({
+    label: 'gaussian render layout',
+    bindGroupLayouts: [splatsBindGroupLayout],
+  });
+
+  const renderPipeline = device.createRenderPipeline({
+    label: 'gaussian render pipeline',
+    layout: renderPipelineLayout,
+    // TODO: complete this object
+  });
+
   // ===============================================
   //    Command Encoder Functions
   // ===============================================
@@ -181,8 +205,21 @@ export default function get_renderer(
     computePass.end();
   };
 
-  const render = (encoder: GPUCommandEncoder) => {
-    // TODO
+  const render = (encoder: GPUCommandEncoder, view: GPUTextureView) => {
+    const renderPass = encoder.beginRenderPass({
+      label: 'gaussian render',
+      colorAttachments: [
+        {
+          view,
+          clearValue: [0, 0, 0, 1],
+          loadOp: 'clear',
+          storeOp: 'store',
+        },
+      ],
+      // no need for depth buffer, we sort everything anyway
+    });
+    renderPass.setPipeline(renderPipeline);
+    renderPass.setBindGroup();
   };
 
   // ===============================================
@@ -198,7 +235,7 @@ export default function get_renderer(
       // TODO: feed sorter output to render pipeline
 
       // run indirect rendering pipeline
-      render(encoder);
+      render(encoder, texture_view);
     },
     camera_buffer,
     updateRenderSettings,
