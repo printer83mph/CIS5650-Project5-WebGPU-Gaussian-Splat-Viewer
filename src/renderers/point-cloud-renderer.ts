@@ -1,5 +1,5 @@
 import { PointCloud } from '../utils/load';
-import pointcloud_wgsl from '../shaders/point_cloud.wgsl';
+import pointcloud_wgsl from '../shaders/point_cloud.wgsl?raw';
 import { Renderer } from './renderer';
 
 export default function get_renderer(

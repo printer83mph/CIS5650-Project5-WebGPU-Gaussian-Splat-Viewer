@@ -117,8 +117,29 @@ fn preprocess(
     @builtin(num_workgroups) wgs: vec3<u32>
 ) {
     let idx = gid.x;
-    //TODO: set up pipeline as described in instruction
+    if idx >= arrayLength(&gaussians) {
+        return;
+    }
+
+    let gaussian = gaussians[idx];
+
+    // unpack position and opacity
+    let pos_xy = unpack2x16float(gaussian.pos_opacity[0]);
+    let pos_z_opacity = unpack2x16float(gaussian.pos_opacity[1]);
+    let pos = vec4f(pos_xy, pos_z_opacity.x, 1.);
+
+    var pos_ndc = camera.proj * camera.view * pos;
+    pos_ndc /= pos_ndc.w;
+    // TODO: some kind of view frustum culling
+
+    let splat_idx = atomicAdd(&sort_infos.keys_size, 1u);
+    splats[splat_idx].position = pack2x16float(pos_ndc.xy);
+
+    // TODO: update sort_indices and sort_depths
 
     let keys_per_dispatch = workgroupSize * sortKeyPerThread;
     // increment DispatchIndirect.dispatchx each time you reach limit for one dispatch of keys
+    if splat_idx % keys_per_dispatch == 0u {
+        atomicAdd(&sort_dispatch.dispatch_x, 1u);
+    } // how the hell does this work
 }

@@ -99,7 +99,7 @@ export default function get_renderer(
 
   const sorterBindGroupLayout = device.createBindGroupLayout({
     label: 'sort bind group layout',
-    entries: Array(4).map((_, idx) => ({
+    entries: [...Array(4).keys()].map((idx) => ({
       binding: idx,
       visibility: GPUShaderStage.COMPUTE,
       buffer: { type: 'storage' },
@@ -147,7 +147,10 @@ export default function get_renderer(
   const cameraUniformsBindGroup = device.createBindGroup({
     label: 'camera uniforms',
     layout: cameraUniformsBindGroupLayout,
-    entries: [{ binding: 0, resource: { buffer: camera_buffer } }],
+    entries: [
+      { binding: 0, resource: { buffer: camera_buffer } },
+      { binding: 1, resource: { buffer: renderSettingsBuffer } },
+    ],
   });
 
   const gaussianBindGroup = device.createBindGroup({
