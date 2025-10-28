@@ -38,7 +38,7 @@ export default function get_renderer(
   };
   updateRenderSettings(device, { gaussianScaling: 1, shDeg: pc.sh_deg });
 
-  const splatByteSize = 4 * 1; // just position for now, 2x f16 in one u32
+  const splatByteSize = 4 * 5; // 5x u32
   const splatsBuffer = device.createBuffer({
     label: 'splats',
     size: pc.num_points * splatByteSize,

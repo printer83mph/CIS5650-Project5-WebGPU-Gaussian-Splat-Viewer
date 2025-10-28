@@ -56,8 +56,9 @@ struct Gaussian {
 };
 
 struct Splat {
-    position: u32
-    // TODO: probably more info
+    position: u32, // 2x f16
+    color: array<u32, 2>, // 3x f16 rgb, 1x f16 opacity
+    conic: array<u32, 2>, // 3x f16 cov, 1x f16 radius
 };
 
 @group(0) @binding(0) var<uniform> camera: CameraUniforms;
@@ -134,6 +135,11 @@ fn preprocess(
 
     let splat_idx = atomicAdd(&sort_infos.keys_size, 1u);
     splats[splat_idx].position = pack2x16float(pos_ndc.xy);
+    // TODO: fill these with real values
+    splats[splat_idx].color[0] = pack2x16float(vec2f(1.));
+    splats[splat_idx].color[1] = pack2x16float(vec2f(1.));
+    splats[splat_idx].conic[0] = pack2x16float(vec2f(1.));
+    splats[splat_idx].conic[1] = pack2x16float(vec2f(1.));
 
     // TODO: update sort_indices and sort_depths
 
