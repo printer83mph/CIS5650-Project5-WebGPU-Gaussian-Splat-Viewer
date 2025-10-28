@@ -13,6 +13,7 @@ import { align } from '../utils/util';
 
 export interface SortStuff {
   sort: (encoder: GPUCommandEncoder) => void;
+  reset: (encoder: GPUCommandEncoder) => void;
   sort_info_buffer: GPUBuffer;
   sort_dispatch_indirect_buffer: GPUBuffer;
 
@@ -262,6 +263,14 @@ export function get_sorter(keysize: number, device: GPUDevice): SortStuff {
   console.log(`keys count adjusted: ${keys_count_adjusted}`); // histogram count
   console.log(`key size: ${keysize}`);
 
+  const nullBuffer = device.createBuffer({
+    label: 'null buffer',
+    size: 4,
+    usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+  });
+  const nulling_data = new Uint32Array([0]);
+  device.queue.writeBuffer(nullBuffer, 0, nulling_data);
+
   const sort_info_buffer = device.createBuffer({
     label: 'sort info',
     size: 5 * 4,
@@ -364,11 +373,17 @@ export function get_sorter(keysize: number, device: GPUDevice): SortStuff {
     record_scatter_keys_indirect(encoder);
   }
 
+  function reset(encoder: GPUCommandEncoder) {
+    encoder.copyBufferToBuffer(nullBuffer, 0, sort_info_buffer, 0, 4);
+    encoder.copyBufferToBuffer(nullBuffer, 0, sort_dispatch_indirect_buffer, 0, 4);
+  }
+
   return {
     sort_info_buffer,
     sort_dispatch_indirect_buffer,
     ping_pong,
 
     sort,
+    reset,
   };
 }

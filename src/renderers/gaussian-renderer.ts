@@ -20,14 +20,6 @@ export default function get_renderer(
   //            Initialize GPU Buffers
   // ===============================================
 
-  const nullBuffer = device.createBuffer({
-    label: 'null buffer',
-    size: 4,
-    usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
-  });
-  const nulling_data = new Uint32Array([0]);
-  device.queue.writeBuffer(nullBuffer, 0, nulling_data);
-
   const renderSettingsBuffer = device.createBuffer({
     label: 'render settings',
     size: 4 * 2, // 2x f32
@@ -198,8 +190,15 @@ export default function get_renderer(
   // ===============================================
   return {
     frame: (encoder: GPUCommandEncoder, texture_view: GPUTextureView) => {
-      sorter.sort(encoder);
+      // run preprocess compute pipeline
       preprocess(encoder);
+
+      sorter.reset(encoder);
+      sorter.sort(encoder);
+      // TODO: feed sorter output to render pipeline
+
+      // run indirect rendering pipeline
+      render(encoder);
     },
     camera_buffer,
     updateRenderSettings,
