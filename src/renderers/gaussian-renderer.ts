@@ -5,7 +5,7 @@ import { get_sorter, c_histogram_block_rows, C } from '../sort/sort';
 import { Renderer } from './renderer';
 
 export interface GaussianRenderer extends Renderer {
-  updateRenderSettings(device: GPUDevice): void;
+  updateRenderSettings(settings: { gaussianScaling?: number; shDeg?: number }): void;
 }
 
 export default function get_renderer(
@@ -25,18 +25,15 @@ export default function get_renderer(
     size: 4 * 2, // 2x f32
     usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
   });
-  const renderSettingsData = new Uint32Array(2);
-  const updateRenderSettings = (
-    dev: GPUDevice,
-    settings?: { gaussianScaling?: number; shDeg?: number },
-  ) => {
+  const renderSettingsData = new Float32Array(2);
+  const updateRenderSettings = (settings: { gaussianScaling?: number; shDeg?: number }) => {
     renderSettingsData.set([
       settings?.gaussianScaling ?? renderSettingsData[0],
       settings?.shDeg ?? renderSettingsData[1],
     ]);
-    dev.queue.writeBuffer(renderSettingsBuffer, 0, renderSettingsData);
+    device.queue.writeBuffer(renderSettingsBuffer, 0, renderSettingsData);
   };
-  updateRenderSettings(device, { gaussianScaling: 1, shDeg: pc.sh_deg });
+  updateRenderSettings({ gaussianScaling: 1.0, shDeg: pc.sh_deg });
 
   const splatByteSize = 4 * 5; // 5x u32
   const splatsBuffer = device.createBuffer({
@@ -65,7 +62,7 @@ export default function get_renderer(
     entries: [
       {
         binding: 0, // CameraUniforms
-        visibility: GPUShaderStage.COMPUTE,
+        visibility: GPUShaderStage.COMPUTE | GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
         buffer: { type: 'uniform' },
       },
       {
@@ -184,7 +181,7 @@ export default function get_renderer(
 
   const renderPipelineLayout = device.createPipelineLayout({
     label: 'gaussian render layout',
-    bindGroupLayouts: [splatsBindGroupLayout],
+    bindGroupLayouts: [splatsBindGroupLayout, cameraUniformsBindGroupLayout],
   });
 
   const renderShaderModule = device.createShaderModule({
@@ -270,6 +267,7 @@ export default function get_renderer(
     });
     renderPass.setPipeline(renderPipeline);
     renderPass.setBindGroup(0, splatsBindGroup);
+    renderPass.setBindGroup(1, cameraUniformsBindGroup);
 
     renderPass.drawIndirect(indirectDrawBuffer, 0);
 

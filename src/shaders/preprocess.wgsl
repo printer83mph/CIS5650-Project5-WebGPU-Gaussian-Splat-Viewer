@@ -147,20 +147,20 @@ fn preprocess(
         return;
     }
 
-    // compute color and opacity
-    let camera_to_center = normalize(pos.xyz + camera.view[3].xyz);
-    let color = computeColorFromSH(camera_to_center, idx, u32(render_settings.sh_deg));
-    let opacity = 1.0 / (1.0 + exp(-pos_z_opacity.y));
-
     // unpack rot and scale
-    let rot = vec4f(unpack2x16float(gaussian.rot[0]), unpack2x16float(gaussian.rot[1]));
-    let scale = vec3f(unpack2x16float(gaussian.scale[0]), unpack2x16float(gaussian.scale[1]).x);
+    let rot_wx = unpack2x16float(gaussian.rot[0]);
+    let rot_yz = unpack2x16float(gaussian.rot[1]);
+    let rot = vec4f(rot_wx.y, rot_yz.x, rot_yz.y, rot_wx.x);
+
+    let scale_xy = exp(unpack2x16float(gaussian.scale[0]));
+    let scale_z_padding = exp(unpack2x16float(gaussian.scale[1]));
+    let scale = vec3f(scale_xy, scale_z_padding.x);
 
     // compute conic values
     let R = mat3x3f(
-        1. - 2. * (rot.y * rot.y + rot.z * rot.z), 2. * (rot.x * rot.y - rot.r * rot.z), 2. * (rot.x * rot.z + rot.r * rot.y),
-        2. * (rot.x * rot.y + rot.r * rot.z), 1. - 2. * (rot.x * rot.x + rot.z * rot.z), 2. * (rot.y * rot.z - rot.r * rot.x),
-        2. * (rot.x * rot.z - rot.r * rot.y), 2. * (rot.y * rot.z + rot.r * rot.x), 1. - 2. * (rot.x * rot.x + rot.y * rot.y)
+        1. - 2. * (rot.y * rot.y + rot.z * rot.z), 2. * (rot.x * rot.y - rot.w * rot.z), 2. * (rot.x * rot.z + rot.w * rot.y),
+        2. * (rot.x * rot.y + rot.w * rot.z), 1. - 2. * (rot.x * rot.x + rot.z * rot.z), 2. * (rot.y * rot.z - rot.w * rot.x),
+        2. * (rot.x * rot.z - rot.w * rot.y), 2. * (rot.y * rot.z + rot.w * rot.x), 1. - 2. * (rot.x * rot.x + rot.y * rot.y),
     );
     var S = mat3x3f(
         render_settings.gaussian_scaling * scale.x, 0., 0.,
@@ -212,6 +212,13 @@ fn preprocess(
     let inv_det = 1.0 / det;
     let conic = vec3f(cov.z * inv_det, -cov.y * inv_det, cov.x * inv_det);
 
+    // compute color and opacity
+    let cam_pos = -camera.view[3].xyz;
+    let camera_to_splat = normalize(pos.xyz - cam_pos);
+    let color = computeColorFromSH(camera_to_splat, idx, u32(render_settings.sh_deg));
+    let opacity = 1.0 / (1.0 + exp(-pos_z_opacity.y));
+
+    // add to splat buffer atomically
     let splat_idx = atomicAdd(&sort_infos.keys_size, 1u);
     splats[splat_idx].position = pack2x16float(pos_ndc.xy);
     splats[splat_idx].color[0] = pack2x16float(color.rg);
