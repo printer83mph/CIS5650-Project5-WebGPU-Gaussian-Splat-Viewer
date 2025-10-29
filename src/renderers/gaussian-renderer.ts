@@ -285,8 +285,9 @@ export default function get_renderer(
       sorter.reset(encoder);
       preprocess(encoder);
 
-      // sorter.sort(encoder);
-      // TODO: feed sorter output to render pipeline
+      sorter.sort(encoder);
+      // copy number of instances from sorting info
+      encoder.copyBufferToBuffer(sorter.sort_info_buffer, 0, indirectDrawBuffer, 4, 4);
 
       // run indirect rendering pipeline
       render(encoder, texture_view);
