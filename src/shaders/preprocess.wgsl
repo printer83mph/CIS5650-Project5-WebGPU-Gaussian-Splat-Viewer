@@ -142,24 +142,82 @@ fn preprocess(
     var pos_ndc = camera.proj * pos_view;
     pos_ndc /= pos_ndc.w;
 
+    // simple frustum culling
     if any(abs(pos_ndc.xy) > vec2f(1.2)) || pos_ndc.z < 0. {
         return;
     }
-
-    let splat_idx = atomicAdd(&sort_infos.keys_size, 1u);
-    splats[splat_idx].position = pack2x16float(pos_ndc.xy);
 
     // compute color and opacity
     let camera_to_center = normalize(pos.xyz + camera.view[3].xyz);
     let color = computeColorFromSH(camera_to_center, idx, u32(render_settings.sh_deg));
     let opacity = 1.0 / (1.0 + exp(-pos_z_opacity.y));
 
+    // unpack rot and scale
+    let rot = vec4f(unpack2x16float(gaussian.rot[0]), unpack2x16float(gaussian.rot[1]));
+    let scale = vec3f(unpack2x16float(gaussian.scale[0]), unpack2x16float(gaussian.scale[1]).x);
+
+    // compute conic values
+    let R = mat3x3f(
+        1. - 2. * (rot.y * rot.y + rot.z * rot.z), 2. * (rot.x * rot.y - rot.r * rot.z), 2. * (rot.x * rot.z + rot.r * rot.y),
+        2. * (rot.x * rot.y + rot.r * rot.z), 1. - 2. * (rot.x * rot.x + rot.z * rot.z), 2. * (rot.y * rot.z - rot.r * rot.x),
+        2. * (rot.x * rot.z - rot.r * rot.y), 2. * (rot.y * rot.z + rot.r * rot.x), 1. - 2. * (rot.x * rot.x + rot.y * rot.y)
+    );
+    var S = mat3x3f(
+        render_settings.gaussian_scaling * scale.x, 0., 0.,
+        0., render_settings.gaussian_scaling * scale.y, 0.,
+        0., 0., render_settings.gaussian_scaling * scale.z,
+    );
+
+    let cov3D = transpose(S * R) * S * R;
+
+    let t = pos_view.xyz;
+    let J = mat3x3f(
+        camera.focal.x / t.z, 0.0, -(camera.focal.x * t.x) / (t.z * t.z),
+        0.0, camera.focal.y / t.z, -(camera.focal.y * t.y) / (t.z * t.z),
+        0.0, 0.0, 0.0
+    );
+
+    let W = transpose(mat3x3f(
+        camera.view[0].xyz, camera.view[1].xyz, camera.view[2].xyz
+    ));
+
+    let T = W * J;
+
+    let Vrk = mat3x3f(
+        cov3D[0][0], cov3D[0][1], cov3D[0][2],
+        cov3D[0][1], cov3D[1][1], cov3D[1][2],
+        cov3D[0][2], cov3D[1][2], cov3D[2][2]
+    );
+
+    var cov2D = transpose(T) * transpose(Vrk) * T;
+
+    // this addition is for stability apparently?
+    cov2D[0][0] += 0.3;
+    cov2D[1][1] += 0.3;
+
+    // compute conic and radius
+    let cov = vec3f(cov2D[0][0], cov2D[0][1], cov2D[1][1]);
+    let det = cov.x * cov.z - cov.y * cov.y;
+    if det == 0.0 {
+        return;
+    }
+
+    // compute radius
+    let mid = 0.5 * (cov.x + cov.z);
+    let lambda1 = mid + sqrt(max(0.1, mid * mid - det)); // The author is not too sure what 0.1 serves here :o
+    let lambda2 = mid - sqrt(max(0.1, mid * mid - det));
+    let radius = ceil(3.0 * sqrt(max(lambda1, lambda2)));
+
+    // compute conic
+    let inv_det = 1.0 / det;
+    let conic = vec3f(cov.z * inv_det, -cov.y * inv_det, cov.x * inv_det);
+
+    let splat_idx = atomicAdd(&sort_infos.keys_size, 1u);
+    splats[splat_idx].position = pack2x16float(pos_ndc.xy);
     splats[splat_idx].color[0] = pack2x16float(color.rg);
     splats[splat_idx].color[1] = pack2x16float(vec2f(color.b, opacity));
-
-    // TODO: compute conic values
-    splats[splat_idx].conic[0] = pack2x16float(vec2f(1.));
-    splats[splat_idx].conic[1] = pack2x16float(vec2f(1.));
+    splats[splat_idx].conic[0] = pack2x16float(conic.xy);
+    splats[splat_idx].conic[1] = pack2x16float(vec2f(conic.z, radius));
 
     // update sorting info!
     sort_indices[splat_idx] = splat_idx;
