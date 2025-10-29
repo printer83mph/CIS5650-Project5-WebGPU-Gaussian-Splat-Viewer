@@ -26,6 +26,7 @@ export default async function init(
   let cameras;
 
   const camera = new Camera(canvas, device);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const control = new CameraControl(camera);
 
   const observer = new ResizeObserver(() => {

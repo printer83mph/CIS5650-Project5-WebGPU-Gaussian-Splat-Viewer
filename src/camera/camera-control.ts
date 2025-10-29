@@ -1,4 +1,4 @@
-import { vec3, mat3, mat4, quat } from 'wgpu-matrix';
+import { vec3, mat4, quat } from 'wgpu-matrix';
 import { Camera } from './camera';
 
 export class CameraControl {

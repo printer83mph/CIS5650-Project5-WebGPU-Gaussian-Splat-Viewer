@@ -227,9 +227,11 @@ function create_histogram_buffer(keysize: number, device: GPUDevice) {
 
   // subgroup and workgroup sizes
   const histo_sg_size = C.histogram_sg_size;
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const _histo_wg_size = C.histogram_wg_size;
   const _prefix_sg_size = histo_sg_size;
   const _internal_sg_size = histo_sg_size;
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   // The "internal" memory map looks like this:
   //   +---------------------------------+ <-- 0

@@ -1,5 +1,5 @@
-import { Mat3, mat3, Mat4, mat4, Vec3, vec3, Vec2, vec2 } from 'wgpu-matrix';
-import { log, time, timeLog } from '../utils/simple-console';
+import { mat3, Mat4, mat4, Vec3, vec3, Vec2, vec2 } from 'wgpu-matrix';
+import { log } from '../utils/simple-console';
 
 interface CameraJson {
   id: number;
@@ -16,6 +16,7 @@ function focal2fov(focal: number, pixels: number): number {
   return 2 * Math.atan(pixels / (2 * focal));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function fov2focal(fov: number, pixels: number): number {
   return pixels / (2 * Math.tan(fov * 0.5));
 }
@@ -94,6 +95,7 @@ export async function load_camera_presets(file: string): Promise<CameraPreset[]>
 const c_size_vec2 = 4 * 2;
 const c_size_mat4 = 4 * 16; // byte size of mat4 (i.e. Float32Array(16))
 const c_size_camera_uniform = 4 * c_size_mat4 + 2 * c_size_vec2;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface CameraUniform {
   view_matrix: Mat4;
   view_inv_matrix: Mat4;
