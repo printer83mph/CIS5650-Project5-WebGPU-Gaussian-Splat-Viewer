@@ -2,25 +2,29 @@
 
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 5**
 
-- (TODO) YOUR NAME HERE
-- Tested on: (TODO) **Google Chrome 222.2** on
-  Windows 22, i7-2222 @ 2.22GHz 22GB, GTX 222 222MB (Moore 2222 Lab)
+- Thomas Shaw
+- Tested on: **Google Chrome 139.0** on
+  Windows 11, Ryzen 7 5700x @ 4.67GHz, 32GB, RTX 2070 8GB
 
-### Live Demo
-
-[![](img/thumb.png)](http://TODO.github.io/Project4-WebGPU-Forward-Plus-and-Clustered-Deferred)
+### [Live Demo](https://printer83mph.github.io/CIS5650-Project5-WebGPU-Gaussian-Splat-Viewer/)
 
 ### Demo Video/GIF
 
-[![](img/video.mp4)](TODO)
+<img src="docs/video/bonsai.webp" width="512px" />
 
-### (TODO: Your README)
+### Analysis
 
-_DO NOT_ leave the README to the last minute! It is a crucial part of the
-project, and we will not be able to grade you without a good README.
+- Comparing our point cloud renderer to our gaussian splat renderer, we find a fairly large degredation in performance. This makes sense — our point cloud renderer only has to draw points, while the gaussian pipeline must run depth sorting, covariance computation, and overdraw many pixels from each overlapping splat quad.
 
-This assignment has a considerable amount of performance analysis compared
-to implementation work. Complete the implementation early to leave time!
+- Updating the workgroup size leads to strange behavior. This may be due to my implementation, but it seems that any workgroup size outside of 256 will lead to depth sorting artifacts and reduced performance. It may be that smaller workgroups greatly increase the required depth of the parallel radix sort.
+  - 64: 30-40fps, rendering artifacts
+  - 128: 50-100fps, rendering artifacts
+  - 256: 80-120fps
+  - \> 256: invalid size for webgpu
+
+- View-frustum culling gives a small performance boost only when looking away from some of the scene. It seems that a large part of the performance cost is simply drawing all of the quads.
+
+- With a larger number of gaussians, scene load time increases dramatically, and performance degrades quite a bit. However, of course, it is only when facing the model and thus drawing these quads that the performance hit is seen.
 
 ### Credits
 
