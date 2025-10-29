@@ -24,7 +24,7 @@ export function decodeHeader(
   const headerLines = headerText.split('\n');
 
   let vertexCount = 0;
-  let propertyTypes: Record<string, string> = {};
+  const propertyTypes: Record<string, string> = {};
 
   for (let i = 0; i < headerLines.length; i++) {
     const line = headerLines[i].trim();
@@ -45,8 +45,7 @@ export function decodeHeader(
     }
   }
 
-  const vertexByteOffset =
-    headerText.indexOf('end_header') + 'end_header'.length + 1;
+  const vertexByteOffset = headerText.indexOf('end_header') + 'end_header'.length + 1;
   const vertexData = new DataView(plyArrayBuffer, vertexByteOffset);
 
   return [vertexCount, propertyTypes, vertexData];
@@ -61,7 +60,7 @@ export function readRawVertex(
    * - offset: the offset of the next vertex in the vertexData DataView
    * - rawVertex: a map from property names to their values
    */
-  let rawVertex: Record<string, number> = {};
+  const rawVertex: Record<string, number> = {};
 
   for (const property in propertyTypes) {
     const propertyType = propertyTypes[property];

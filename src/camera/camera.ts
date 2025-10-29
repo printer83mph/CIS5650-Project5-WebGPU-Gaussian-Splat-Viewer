@@ -1,5 +1,5 @@
-import { Mat3, mat3, Mat4, mat4, Vec3, vec3, Vec2, vec2 } from 'wgpu-matrix';
-import { log, time, timeLog } from '../utils/simple-console';
+import { mat3, Mat4, mat4, Vec3, vec3, Vec2, vec2 } from 'wgpu-matrix';
+import { log } from '../utils/simple-console';
 
 interface CameraJson {
   id: number;
@@ -16,6 +16,7 @@ function focal2fov(focal: number, pixels: number): number {
   return 2 * Math.atan(pixels / (2 * focal));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function fov2focal(fov: number, pixels: number): number {
   return pixels / (2 * Math.tan(fov * 0.5));
 }
@@ -25,12 +26,7 @@ function get_view_matrix(r: Mat4, t: Vec3): Mat4 {
   return mat4.translate(r, minus_t);
 }
 
-function get_projection_matrix(
-  znear: number,
-  zfar: number,
-  fov_x: number,
-  fov_y: number,
-) {
+function get_projection_matrix(znear: number, zfar: number, fov_x: number, fov_y: number) {
   // return mat4.perspective(fov_y, 1, znear, zfar);
 
   const tan_half_fov_y = Math.tan(fov_y / 2);
@@ -68,9 +64,7 @@ interface CameraPreset {
   rotation: Mat4;
 }
 
-export async function load_camera_presets(
-  file: string,
-): Promise<CameraPreset[]> {
+export async function load_camera_presets(file: string): Promise<CameraPreset[]> {
   const blob = new Blob([file]);
   const arrayBuffer = await new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -101,6 +95,7 @@ export async function load_camera_presets(
 const c_size_vec2 = 4 * 2;
 const c_size_mat4 = 4 * 16; // byte size of mat4 (i.e. Float32Array(16))
 const c_size_camera_uniform = 4 * c_size_mat4 + 2 * c_size_vec2;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface CameraUniform {
   view_matrix: Mat4;
   view_inv_matrix: Mat4;
@@ -167,11 +162,7 @@ export class Camera {
     this.proj_matrix = get_projection_matrix(0.01, 100, this.fovX, this.fovY);
 
     const inv_view_matrix = mat4.inverse(this.view_matrix);
-    vec3.transformMat4Upper3x3(
-      vec3.create(0, 0, 1),
-      inv_view_matrix,
-      this.look,
-    );
+    vec3.transformMat4Upper3x3(vec3.create(0, 0, 1), inv_view_matrix, this.look);
     vec3.normalize(this.look, this.look);
 
     vec3.cross(this.up, this.look, this.right);
@@ -190,11 +181,7 @@ export class Camera {
     intermediate_float_32_array.set(this.focal, offset);
     offset += 2;
 
-    this.device.queue.writeBuffer(
-      this.uniform_buffer,
-      0,
-      intermediate_float_32_array,
-    );
+    this.device.queue.writeBuffer(this.uniform_buffer, 0, intermediate_float_32_array);
   }
   set_preset(preset: CameraPreset): void {
     vec3.copy(preset.position, this.position);
