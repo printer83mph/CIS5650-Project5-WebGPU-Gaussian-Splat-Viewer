@@ -75,8 +75,17 @@ struct Splat {
 
 /// reads the ith sh coef from the storage buffer
 fn sh_coef(splat_idx: u32, c_idx: u32) -> vec3<f32> {
-    //TODO: access your binded sh_coeff, see load.ts for how it is stored
-    return vec3<f32>(0.0);
+    let channel = c_idx & 1u;
+    let start_idx = splat_idx * 24 + (c_idx / 2) * 3 + channel;
+
+    let col_01 = unpack2x16float(sh_coefficients[start_idx]);
+    let col_23 = unpack2x16float(sh_coefficients[start_idx + 1]);
+
+    if channel == 0u {
+        return vec3f(col_01.xy, col_23.x);
+    } else {
+        return vec3f(col_01.y, col_23.xy);
+    }
 }
 
 // spherical harmonics evaluation with Condon–Shortley phase
@@ -136,9 +145,16 @@ fn preprocess(
 
     let splat_idx = atomicAdd(&sort_infos.keys_size, 1u);
     splats[splat_idx].position = pack2x16float(pos_ndc.xy);
-    // TODO: fill these with real values
-    splats[splat_idx].color[0] = pack2x16float(vec2f(1.));
-    splats[splat_idx].color[1] = pack2x16float(vec2f(1.));
+
+    // compute color and opacity
+    let camera_to_center = normalize(pos.xyz + camera.view[3].xyz);
+    let color = computeColorFromSH(camera_to_center, idx, u32(render_settings.sh_deg));
+    let opacity = 1.0 / (1.0 + exp(-pos_z_opacity.y));
+
+    splats[splat_idx].color[0] = pack2x16float(color.rg);
+    splats[splat_idx].color[1] = pack2x16float(vec2f(color.b, opacity));
+
+    // TODO: compute conic values
     splats[splat_idx].conic[0] = pack2x16float(vec2f(1.));
     splats[splat_idx].conic[1] = pack2x16float(vec2f(1.));
 
