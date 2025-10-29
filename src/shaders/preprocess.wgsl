@@ -141,7 +141,10 @@ fn preprocess(
     var pos_view = camera.view * pos;
     var pos_ndc = camera.proj * pos_view;
     pos_ndc /= pos_ndc.w;
-    // TODO: some kind of view frustum culling
+
+    if any(abs(pos_ndc.xy) > vec2f(1.2)) || pos_ndc.z < 0. {
+        return;
+    }
 
     let splat_idx = atomicAdd(&sort_infos.keys_size, 1u);
     splats[splat_idx].position = pack2x16float(pos_ndc.xy);
