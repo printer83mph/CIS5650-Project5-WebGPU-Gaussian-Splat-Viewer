@@ -8,7 +8,7 @@
     All shaders can be found in shaders/radix_sort.wgsl
 */
 
-import radix_sort_wgsl from './radix_sort.wgsl';
+import radix_sort_wgsl from './radix_sort.wgsl?raw';
 import { align } from '../utils/util';
 
 export interface SortStuff {

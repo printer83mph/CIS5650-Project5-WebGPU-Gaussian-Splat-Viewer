@@ -5,6 +5,7 @@ struct Splat {
 };
 
 @group(0) @binding(0) var<storage, read> splats: array<Splat>;
+@group(0) @binding(1) var<storage, read> splat_indices: array<u32>;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
@@ -25,7 +26,9 @@ fn vs_main(
     @builtin(vertex_index) vert_idx: u32,
     @builtin(instance_index) instance_idx: u32,
 ) -> VertexOutput {
-    let splat = splats[instance_idx];
+    let splat_idx = splat_indices[instance_idx];
+
+    let splat = splats[splat_idx];
     let center_pos = unpack2x16float(splat.position);
 
     let vertPosOffset: vec2f = VERT_OFFSETS[vert_idx];
